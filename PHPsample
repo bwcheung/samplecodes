@@ -1,3 +1,6 @@
+/* This was used to add a new student record to a database. Also be able to read a file of student names and add the names from file */
+
+
 connect_db();
 
 if($_POST["submit"]) {
