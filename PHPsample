@@ -1,0 +1,102 @@
+connect_db();
+
+if($_POST["submit"]) {
+  $form_id = (int) trim($_REQUEST['id']);
+
+        //get latest entry ID
+        $query = "select id from ap_form_{$form_id} order by id desc limit 1"; 
+        $result = do_query($query);
+        $row = do_fetch_result($result);
+        extract($row);
+    
+        $date_created = date("Y-m-d H:i:s");
+
+
+	$elements =	"INSERT INTO ap_form_{$form_id} ( id, date_created, element_1_1, element_1_2,
+				element_53_1, element_53_2, element_9, element_85)";
+
+	$values = "values($id+1, '{$date_created}', '{$_POST['element_1_1']}', '{$_POST['element_1_2']}',
+			   '{$_POST['element_53_1']}', '{$_POST['element_53_2']}', '{$_POST['element_9']}', 
+			    password('{$_POST['element_85']}'));";
+	$query = $elements . " " . $values;
+
+	$result = do_query($query);
+
+	if ($result) {
+		echo "Success! Added new student name.";
+	} else {
+		echo "Failed to add student.";
+	}
+
+} elseif ($_POST["submit_file"]) {
+
+    $form_id = (int) trim($_REQUEST['id']);
+    $date_created = date("Y-m-d H:i:s");
+
+    $elements =	"INSERT INTO ap_form_{$form_id} ( id, date_created, element_1_1, element_1_2, element_11, element_13, element_15, 
+          element_78, element_77, element_53_1, element_53_2, element_5_1, element_5_2, element_5_3, element_5_4, element_5_5,
+          element_5_6, element_2, element_9, element_16, element_17, element_25, element_85)";
+
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $type = finfo_file($finfo, $_FILES["fileToUpload"]["tmp_name"]);
+
+    if ($type == "text/plain") {
+      $myfile = fopen($_FILES["fileToUpload"]["tmp_name"], "r") or die("Unable to open file!");
+      while (! feof($myfile)) {
+        $line = fgets($myfile);
+        if (empty($line)) {
+          break;
+        }
+        $arr = explode("\t", $line);
+        $date = date_create($arr[3]);
+        $birthdate = date_format($date, "Y-m-d");
+
+        $gender = 0;
+        $sibling = 0;
+        $instrument = getInstrument($arr);
+        $teacher = getTeacher($arr);
+        $length = getLength($arr);
+
+        if ($arr[4] == "Male") {
+          $gender = 1;
+        } else {
+          $gender = 2;
+        };
+
+        if ($arr[7] == "yes") {
+          $sibling = 1;
+        } else {
+          $sibling = 2;
+        };
+
+        if (empty($arr[17])) {
+          $arr[17] = $arr[16];
+        };
+
+        $values = "values({$arr[0]}, '{$date_created}', '{$arr[1]}', '{$arr[2]}', '{$birthdate}', {$gender}, '{$arr[5]}', 
+           '{$arr[6]}', {$sibling}, '{$arr[8]}', '{$arr[9]}', '{$arr[10]}', '{$arr[11]}', '{$arr[12]}', '{$arr[13]}',
+           '{$arr[14]}', '{$arr[15]}', {$arr[16]}, '{$arr[18]}', 
+           '{$instrument}', {$teacher}, {$length}, '{$arr[22]}');";
+
+        $query = $elements . " " . $values . "\n";
+        $result = do_query($query);
+
+        if ($result) {
+          echo "Success! Added new Students";
+          fclose($myfile);
+          break;
+        } else {
+          echo "Failed to add students.";
+          break;
+        }
+      }
+
+    } else {
+      echo "Wrong file type";
+    }
+
+  }
+
+
+
+?>
